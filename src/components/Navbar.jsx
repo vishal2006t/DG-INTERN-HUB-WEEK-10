@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight, User, LogOut, FileText, PlusCircle } from 'lucide-react';
 import dgLogo from '../assets/dg-interns-hub-logo.png';
+import { useAuth } from '../context/AuthContext';
 
-const Navbar = () => {
+const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
+  const { user, isAuthenticated, logout, openAuth } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const logoTargetRef = useRef(null);
@@ -185,8 +187,89 @@ const Navbar = () => {
             </NavLink>
           </nav>
 
-          {/* Action Button */}
-          <div className="navbar-actions">
+          {/* Action Buttons & Auth */}
+          <div className="navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            {isAuthenticated ? (
+              <div className="navbar-user-group" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                {user?.role === 'candidate' && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={onOpenMyApplications}
+                    title="View My Applications"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <FileText size={14} />
+                    <span>My Applications</span>
+                  </button>
+                )}
+
+                {(user?.role === 'recruiter' || user?.role === 'admin') && (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={onOpenPostJob}
+                    title="Post a New Job"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <PlusCircle size={14} />
+                    <span>Post Job</span>
+                  </button>
+                )}
+
+                <div 
+                  className="user-profile-badge" 
+                  style={{
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.4rem', 
+                    padding: '0.35rem 0.65rem', 
+                    background: '#f1f5f9', 
+                    borderRadius: '20px',
+                    fontSize: '0.825rem',
+                    fontWeight: 500,
+                    color: '#0f172a'
+                  }}
+                >
+                  <User size={13} className="text-primary" />
+                  <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                  <span 
+                    style={{
+                      fontSize: '0.7rem',
+                      padding: '0.1rem 0.4rem',
+                      borderRadius: '10px',
+                      textTransform: 'uppercase',
+                      fontWeight: 700,
+                      background: user?.role === 'admin' ? '#fef3c7' : user?.role === 'recruiter' ? '#ede9fe' : '#e0f2fe',
+                      color: user?.role === 'admin' ? '#b45309' : user?.role === 'recruiter' ? '#6d28d9' : '#0369a1'
+                    }}
+                  >
+                    {user?.role}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={logout}
+                  title="Sign Out"
+                  style={{ padding: '0.45rem' }}
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => openAuth('login')}
+              >
+                <span>Sign In</span>
+              </button>
+            )}
+
             <button 
               type="button" 
               className="btn btn-primary btn-sm nav-cta-btn"
@@ -238,6 +321,68 @@ const Navbar = () => {
               >
                 Contact
               </NavLink>
+
+              {/* Mobile Auth Actions */}
+              <div style={{ padding: '0.75rem 0', borderTop: '1px solid #e2e8f0', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {isAuthenticated ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}>
+                      <span>Signed in as <strong>{user?.name}</strong></span>
+                      <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: '#e2e8f0' }}>{user?.role}</span>
+                    </div>
+                    {user?.role === 'candidate' && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ width: '100%' }}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          if (onOpenMyApplications) onOpenMyApplications();
+                        }}
+                      >
+                        My Applications
+                      </button>
+                    )}
+                    {(user?.role === 'recruiter' || user?.role === 'admin') && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ width: '100%' }}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          if (onOpenPostJob) onOpenPostJob();
+                        }}
+                      >
+                        Post a Job
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ width: '100%', color: '#ef4444' }}
+                      onClick={() => {
+                        logout();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuth('login');
+                    }}
+                  >
+                    Sign In / Register
+                  </button>
+                )}
+              </div>
+
               <div className="mobile-drawer-cta">
                 <button 
                   type="button" 

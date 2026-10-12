@@ -1,31 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { jobsData } from '../data/jobs';
 import { 
   ArrowLeft, 
   MapPin, 
   Clock, 
-  Banknote, 
   Calendar, 
-  Building2, 
   CheckCircle2, 
   Share2, 
-  Briefcase, 
   GraduationCap, 
   BookOpen, 
   Gift, 
   Users, 
   Check, 
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
+import { api } from '../services/api';
 
 const JobDetailsPage = ({ onApplyJob }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [copiedShare, setCopiedShare] = useState(false);
+  const [job, setJob] = useState(() => jobsData.find((j) => j.id === id || j.slug === id || j._id === id) || null);
+  const [isLoading, setIsLoading] = useState(!job);
 
-  const job = jobsData.find((j) => j.id === id);
+  useEffect(() => {
+    let isCancelled = false;
+    api.jobs.getById(id)
+      .then((data) => {
+        if (!isCancelled && data) setJob(data);
+      })
+      .catch((err) => {
+        console.warn('Backend job lookup fallback:', err.message);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsLoading(false);
+      });
+    return () => { isCancelled = true; };
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="page-wrapper job-not-found-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Loader2 size={36} className="spin-icon" style={{ animation: 'spin 1s linear infinite', color: '#2563eb' }} />
+      </div>
+    );
+  }
 
   if (!job) {
     return (

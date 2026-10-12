@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, MapPin, Send, CheckCircle2, MessageSquare, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
+import { Mail, MapPin, Send, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
 const LinkedInIcon = ({ size = 22, className = '' }) => (
   <svg 

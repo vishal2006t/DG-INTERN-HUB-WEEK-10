@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Banknote, Calendar, ArrowRight, CheckCircle2, Building2 } from 'lucide-react';
+import { MapPin, Clock, Banknote, Calendar, ArrowRight } from 'lucide-react';
 
 const JobCard = ({ job, onApply }) => {
   return (

@@ -1,158 +1,257 @@
-<<<<<<< HEAD
-# DG Interns Hub
+# DG Interns Hub - Full Stack Internship & Job Portal (Week 8)
 
-A professional Job & Internship Landing Website designed for college students, freshers, and beginners looking for tech internships and entry-level opportunities.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green.svg)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-5.x-lightgrey.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose%209.x-brightgreen.svg)](https://www.mongodb.com/)
+[![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8.x-purple.svg)](https://vitejs.dev/)
 
----
-
-## 📌 Project Description
-
-**DG Interns Hub** is a frontend discovery platform built for the Week 7 internship task. It provides an intuitive, trustworthy, and student-friendly experience for discovering curated internship opportunities across modern domains like Web Development, React, Java, Python, AI/ML, UI/UX, Data Analytics, and Cyber Security.
-
-Students can browse listings, filter by domain and work mode, inspect detailed role requirements and learning outcomes, and submit job applications through a validated application flow.
+A professional, production-ready Full-Stack Job & Internship Portal engineered for the **DG Interns Hub Advanced Web Application Internship (Week 8)**. This milestone elevates the Week 7 frontend interface into a complete full-stack web application featuring a robust REST API backend, secure role-based authentication, database indexing, query sanitization, and automated data seeding.
 
 ---
 
-## 🌟 Features
+## 🎯 Week 8 Objectives & Highlights
 
-- **Original Professional Design**: Clean, light career-portal interface designed with corporate standards (no AI chatbots, excessive gradients, glowing cards, or floating blobs).
-- **Client-Side Routing**: Complete multi-page application powered by React Router DOM.
-- **Dynamic Search**: Real-time filtering across job title, company name, skill tags, and location.
-- **Category Filter Tabs**: One-click filtering across 8 tech domains (All, Web Development, React, Java, Python, AI/ML, UI/UX, Data Analytics, Cyber Security) with live count indicators.
-- **Work Mode Filters**: Filter by Remote, Hybrid, or All modes.
-- **Stipend Sorting**: Toggle between default featured order and highest stipend.
-- **Job Details View**: 2-column desktop layout with detailed role responsibilities, required skills, learning outcomes, eligibility, perks, and a sticky summary card.
-- **Interactive Application Modal**:
-  - Accessible modal dialog for applying to any listed internship.
-  - Comprehensive field validation (Name, Email, Phone, Resume file upload, and Statement of Interest).
-  - Realistic submission feedback showing confirmation ID and success message.
-  - Automatic form reset.
-- **Get in Touch Contact Page**:
-  - Validated contact form with instant success confirmation.
-  - Support contact cards for Email, LinkedIn, GitHub, and Headquarters location.
-  - Student FAQ section answering common internship queries.
-- **Responsive Layout**: Designed for screens from 375px mobile up to 1920px desktop with zero horizontal scrolling and an interactive mobile hamburger menu.
+- **Backend Architecture**: Structured Express.js backend with separated MVC pattern (`config/`, `controllers/`, `models/`, `routes/`, `middleware/`, `validators/`, `utils/`).
+- **Database Modeling**: Production Mongoose schemas for `User`, `Job`, and `Application` with relational references, indexes, and duplicate prevention.
+- **Role-Based Access Control (RBAC)**: Support for three distinct user roles:
+  - `candidate`: Browse opportunities, filter/search/sort, apply, track status in "My Applications", withdraw applications.
+  - `recruiter`: Create jobs, update and delete own listings, view applicants, review & update application statuses.
+  - `admin`: Universal permissions across all jobs, applications, and user accounts.
+- **Authentication**: Stateless JSON Web Token (JWT) workflow paired with bcrypt password hashing and token verification middleware.
+- **Advanced Query Features**: Multi-criteria search, category & work-mode filtering, sorting (newest, oldest, deadline, stipend), and paginated responses with metadata.
+- **Enterprise Security**: Helmet HTTP headers, IP rate limiting, brute-force auth rate limiting, request payload limits, NoSQL injection protection, and sanitized error responses.
+- **Seamless UI Integration**: Full connection between the existing Week 7 React UI and the new REST APIs, including interactive 1-click demo logins and modal dashboards.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-- **React JS** (Functional Components, Hooks: `useState`, `useParams`, `useNavigate`, `useMemo`, `useEffect`)
-- **Vite** (Next-generation frontend tooling & dev server)
-- **JavaScript (ES6+)**
-- **React Router DOM** (`BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`)
-- **Vanilla CSS** (Custom CSS variables, responsive flexbox & grid system)
-- **Docker & Docker Compose** (Containerized execution on Node 22 Alpine)
+| Layer | Technologies |
+| :--- | :--- |
+| **Backend Runtime** | Node.js (v20+), Express.js |
+| **Database & ODM** | MongoDB, Mongoose ODM |
+| **Authentication & Crypto** | JSON Web Tokens (`jsonwebtoken`), `bcryptjs` |
+| **Security & Middleware** | `helmet`, `cors`, `express-rate-limit`, parameter sanitization |
+| **Frontend Framework** | React 19, React Router DOM, Vite |
+| **Icons & Styling** | Lucide React, Modern CSS Design System |
+| **API Testing & Tools** | Postman Collection v2.1.0, Oxlint |
 
 ---
 
 ## 📂 Project Structure
 
 ```
-├── .dockerignore
-├── .gitignore
-├── Dockerfile
-├── docker-compose.yml
-├── index.html
-├── package.json
-├── vite.config.js
-├── README.md
-└── src/
-    ├── components/
-    │   ├── ApplicationForm.jsx   # Application modal with validation and success screen
-    │   ├── FeatureCard.jsx       # Value proposition cards for Why Choose Us
-    │   ├── FilterBar.jsx         # Category filter pills with count badges
-    │   ├── Footer.jsx            # Multi-column footer with quick links, contact, and social
-    │   ├── HowItWorks.jsx        # 3-step structured student onboarding guide
-    │   ├── JobCard.jsx           # Internship card with meta highlights and action buttons
-    │   ├── Navbar.jsx            # Responsive header with mobile hamburger drawer
-    │   └── SearchBar.jsx         # Search input with clear button
-    │
-    ├── pages/
-    │   ├── Home.jsx              # Landing page (Hero, Stats, Featured, Why Us, Steps, CTA)
-    │   ├── Jobs.jsx              # All internship listings, search, and category filters
-    │   ├── JobDetailsPage.jsx    # 2-column detailed role overview and sticky apply card
-    │   └── Contact.jsx           # Support desk, contact cards, validated form, and FAQ
-    │
-    ├── data/
-    │   └── jobs.js               # 8 realistic sample opportunities and platform datasets
-    │
-    ├── App.jsx                   # Router setup, ScrollToTop, and global modal state
-    ├── App.css                   # Custom responsive styling and design system
-    ├── index.css                 # CSS variables, typography tokens, and resets
-    └── main.jsx                  # React application entrypoint
+.
+├── server/                                # Advanced Week 8 Backend
+│   ├── config/
+│   │   └── database.js                    # MongoDB connection with dev fallback
+│   ├── controllers/
+│   │   ├── authController.js              # Register, Login, Me, Logout
+│   │   ├── jobController.js               # CRUD, Search, Filter, Pagination, Sort
+│   │   ├── applicationController.js       # Apply, Track, Status Update, Withdraw
+│   │   └── userController.js              # Profile view, update, delete
+│   ├── models/
+│   │   ├── User.js                        # User schema with bcrypt hooks & roles
+│   │   ├── Job.js                         # Job schema with text & compound indexes
+│   │   └── Application.js                 # Application schema with unique constraint
+│   ├── routes/
+│   │   ├── authRoutes.js                  # /api/auth endpoints
+│   │   ├── jobRoutes.js                   # /api/jobs endpoints
+│   │   ├── applicationRoutes.js           # /api/applications endpoints
+│   │   └── userRoutes.js                  # /api/users endpoints
+│   ├── middleware/
+│   │   ├── authMiddleware.js              # JWT verification
+│   │   ├── roleMiddleware.js              # Role-based authorization
+│   │   ├── errorMiddleware.js             # Centralized error handler (no stack leaks)
+│   │   └── validationMiddleware.js        # Request body & ObjectId validation
+│   ├── validators/
+│   │   ├── authValidator.js               # Email/password validation
+│   │   ├── jobValidator.js                # Job payload validation
+│   │   └── applicationValidator.js        # Application payload validation
+│   ├── utils/
+│   │   ├── helpers.js                     # Standard response helpers & sanitizers
+│   │   └── seeder.js                      # Auto-seeder for demo users & verified jobs
+│   └── server.js                          # Express app entry point & security setup
+│
+├── postman/
+│   └── DG-Interns-Hub-API.json            # Complete Postman Collection (v2.1.0)
+│
+├── src/                                   # Week 7 Preserved Frontend + Week 8 Integration
+│   ├── components/
+│   │   ├── AuthModal.jsx                  # Sign In / Register Modal + 1-Click Demo Login
+│   │   ├── MyApplicationsModal.jsx        # Candidate application status tracker
+│   │   ├── PostJobModal.jsx               # Recruiter internship posting modal
+│   │   ├── ApplicationForm.jsx            # Connected API application submission
+│   │   ├── Navbar.jsx                     # Navbar with RBAC badge & user actions
+│   │   ├── JobCard.jsx                    # Internship card display
+│   │   └── ...
+│   ├── context/
+│   │   └── AuthContext.jsx                # Global Auth state & token storage
+│   ├── services/
+│   │   └── api.js                         # REST client wrapper with fallback
+│   ├── pages/
+│   │   ├── Home.jsx                       # Hero, featured listings, stats
+│   │   ├── Jobs.jsx                       # Connected to /api/jobs with pagination
+│   │   ├── JobDetailsPage.jsx             # Dynamic /api/jobs/:id details
+│   │   └── Contact.jsx                    # Contact page
+│   └── data/
+│       └── jobs.js                        # Verified seed data
+│
+├── API-DOCUMENTATION.md                   # Complete REST API reference manual
+├── .env.example                           # Sample environment configuration
+├── .gitignore                             # Git exclusion rules
+├── package.json                           # Dependencies & npm scripts
+└── README.md                              # Project documentation
 ```
 
 ---
 
-## 🚀 Local Setup
+## ⚡ Quick Start & Installation
 
-### 1. Install Dependencies
-Make sure you have Node.js (v18+) and npm installed. From the project directory, run:
+### 1. Prerequisites
+- **Node.js**: `v18` or `v20+` installed
+- **npm**: `v9+` or `v10+` installed
+- **MongoDB**: Local MongoDB instance running on `mongodb://127.0.0.1:27017` or MongoDB Atlas cloud URI
 
+### 2. Clone and Install Dependencies
 ```bash
+# Clone the repository
+git clone https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-8.git
+cd DG-INTERN-HUB-WEEK-8
+
+# Install all dependencies (Frontend + Backend)
 npm install
 ```
 
-### 2. Start the Development Server
-Run the local Vite dev server:
+### 3. Environment Configuration
+Create a `.env` file in the project root based on `.env.example`:
+```bash
+cp .env.example .env
+```
 
+Ensure your `.env` contains:
+```env
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb://127.0.0.1:27017/dg_interns_hub
+JWT_SECRET=super_secret_jwt_key_dg_interns_hub_development_2026
+JWT_EXPIRES_IN=7d
+CLIENT_URL=http://localhost:5173
+```
+> **Note**: `.env` is ignored by Git to safeguard private keys and credentials.
+
+---
+
+## 🚀 Running the Project
+
+### Option A: Run Both Frontend and Backend Concurrently (Recommended)
+```bash
+npm run dev:all
+```
+- Backend starts at: `http://localhost:5000`
+- Frontend starts at: `http://localhost:5173`
+
+### Option B: Run Backend Separately
+```bash
+# Start backend server
+npm run server
+
+# Or run with automatic reload during development
+npm run server:watch
+```
+
+### Option C: Run Frontend Separately
 ```bash
 npm run dev
 ```
 
-The application will start immediately at:
-👉 **http://localhost:5173**
+---
+
+## 🔐 Default Demo Accounts (Auto-Seeded)
+
+When the backend starts for the first time, default accounts and 6+ verified internship opportunities are seeded into MongoDB:
+
+| Role | Email | Password | Permissions |
+| :--- | :--- | :--- | :--- |
+| **Candidate** | `candidate@example.com` | `CandidatePassword123!` | Apply to jobs, track & withdraw applications |
+| **Recruiter** | `recruiter@nexoracloud.com` | `RecruiterPassword123!` | Create, update, delete jobs; manage applicant status |
+| **Admin** | `admin@dginternshub.com` | `AdminPassword123!` | Full unrestricted access to all entities |
+
+> **Pro Tip**: In the web UI, click **Sign In** to access 1-Click quick login buttons for all three roles!
 
 ---
 
-## 🐳 Docker Setup
+## 📡 REST API Overview
 
-The project includes complete Docker and Docker Compose configuration.
+All responses return standard envelopes:
+- Success: `{ "success": true, "message": "...", "data": ... }`
+- Error: `{ "success": false, "message": "..." }`
 
-### Run with Docker Compose
-Run the following command in the project root:
+### Authentication APIs
+- `POST /api/auth/register` - Create account (Candidate or Recruiter)
+- `POST /api/auth/login` - Authenticate & obtain JWT
+- `GET /api/auth/me` - Fetch authenticated user details
+- `POST /api/auth/logout` - Invalidate client session
 
-```bash
-docker compose up --build
-```
+### User APIs
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update bio, skills, contact info, password
+- `DELETE /api/users/profile` - Delete profile & related applications
 
-The container will build using **Node 22 Alpine** and start the application on port `5173`.
+### Job & Internship APIs
+- `GET /api/jobs` - List jobs with search, category/mode filters, pagination, and sorting
+- `GET /api/jobs/:id` - View single job by ObjectId or custom slug
+- `POST /api/jobs` - Create job *(Recruiter / Admin only)*
+- `PUT /api/jobs/:id` - Update job *(Poster / Admin only)*
+- `DELETE /api/jobs/:id` - Delete job *(Poster / Admin only)*
 
-Access the application in your browser at:
-👉 **http://localhost:5173**
+### Application APIs
+- `POST /api/applications` - Submit application *(Duplicate prevention enforced)*
+- `GET /api/applications/my` - View current candidate's applications
+- `GET /api/applications/:id` - Inspect application *(Candidate, Poster, Admin)*
+- `PUT /api/applications/:id/status` - Update status to `reviewed`, `shortlisted`, `accepted`, `rejected` *(Poster / Admin)*
+- `DELETE /api/applications/:id` - Withdraw application
 
-To stop the container:
-```bash
-docker compose down
-```
-
----
-
-## 🧭 Routes
-
-| Route | Page | Description |
-|---|---|---|
-| `/` | **Home** | Landing page with Hero, Stats, Featured Internships, Why Choose Us, How It Works, and Final CTA. |
-| `/jobs` | **Jobs** | Full internship discovery directory with search bar, category filters, and 8 realistic opportunities. |
-| `/jobs/:id` | **Job Details** | Comprehensive 2-column role view with responsibilities, skills, learning, perks, and apply CTA. Includes invalid ID fallback with "Back to Jobs" button. |
-| `/contact` | **Contact** | Support and inquiry desk with validated message form, contact cards, and student FAQs. |
-
----
-
-## 🔮 Future Improvements
-
-1. **Saved Internships**: Add localStorage-based bookmarking so students can save opportunities to review later.
-2. **Resume Preview**: Enable in-browser PDF preview when students upload their resume in the application modal.
-3. **Application Tracker**: A dedicated student dashboard displaying the status of all submitted applications.
-4. **Email Notifications**: Integration with an email service to send automated application receipts to students.
+> For the exhaustive endpoint documentation with curl examples, request bodies, and parameter tables, please see [API-DOCUMENTATION.md](file:///d:/DG%20INTERNS%20HUB/WEEK%208/WEB/API-DOCUMENTATION.md).
 
 ---
 
-## 👨‍💻 Author
+## 🛡️ Security Implementation
 
-Built for **DG Interns Hub** — Week 7 Internship Submission.
-Empowering college students and freshers to launch real tech careers with confidence.
-=======
-# DG-INTERN-HUB-WEEK-7
->>>>>>> d8dd8823ebe047bdd2b72b8e38dc5d32d51c3757
+1. **JSON Web Token (JWT)**: Cryptographically signed tokens expiring in 7 days, verified on all protected routes.
+2. **Password Protection**: One-way bcrypt salt-and-hash algorithm prevents plaintext credential exposure.
+3. **Role-Based Guards**: Strict middleware checks prevent unauthorized privilege escalation (e.g., candidate attempting to create jobs).
+4. **Helmet Security Headers**: Shields against common HTTP vulnerabilities (XSS, clickjacking, MIME-sniffing).
+5. **Rate Limiting**:
+   - General API limiter: Max 300 requests / 15 minutes per IP.
+   - Authentication limiter: Max 50 requests / 15 minutes per IP to block brute-force attempts.
+6. **Query & Input Sanitization**: Rejects prohibited MongoDB operators (`$` and `.`) in user parameters to prevent NoSQL injection.
+7. **Safe Error Handling**: Never leaks stack traces, internal server filepaths, or database connection details to clients.
+8. **Body Size Limits**: JSON parsing capped at `15kb` to prevent Denial of Service (DoS) attacks via oversized payloads.
+
+---
+
+## 📬 Postman Testing
+
+A comprehensive Postman collection is included in [postman/DG-Interns-Hub-API.json](file:///d:/DG%20INTERNS%20HUB/WEEK%208/WEB/postman/DG-Interns-Hub-API.json).
+
+### How to Import and Run:
+1. Open **Postman**.
+2. Click **Import** -> Select file `postman/DG-Interns-Hub-API.json`.
+3. The collection is organized into 5 folders:
+   - `1. Authentication` (Register, Login, Me, Logout, Duplicate prevention)
+   - `2. Users Profile` (Get profile, Update profile)
+   - `3. Jobs Management` (Create, List, Filter, Search, Sort, Pagination, Update)
+   - `4. Applications` (Apply, My applications, Update status, Delete)
+   - `5. Security & Edge Cases` (Missing token, Invalid token, Wrong role, Malformed body)
+4. Tests automatically capture and pass JWT tokens into collection variables (`candidateToken`, `recruiterToken`, `jobId`, `applicationId`).
+
+---
+
+## 🔗 GitHub Repository
+
+- **Repository**: [https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-8](https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-8)
+- **Author**: Vishal T
+- **Internship**: DG Interns Hub - Advanced Web Application Internship (Week 8)

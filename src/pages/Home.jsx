@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Star, Sparkles, Building, MapPin, Clock, Banknote, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Star, ShieldCheck } from 'lucide-react';
 import { jobsData, platformStats, whyChooseUsFeatures } from '../data/jobs';
 import JobCard from '../components/JobCard';
 import FeatureCard from '../components/FeatureCard';

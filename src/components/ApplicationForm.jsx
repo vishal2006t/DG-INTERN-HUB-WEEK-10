@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Upload, FileText, AlertCircle, Building2, Briefcase } from 'lucide-react';
+import { X, CheckCircle2, Upload, FileText, AlertCircle, Building2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 const ApplicationForm = ({ job, isOpen, onClose }) => {
+  const { user, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -26,14 +29,22 @@ const ApplicationForm = ({ job, isOpen, onClose }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Reset form when modal opens or job changes
+  // Pre-fill user data when modal opens
   useEffect(() => {
     if (isOpen) {
       setIsSubmitted(false);
       setIsSubmitting(false);
       setErrors({});
+      if (user) {
+        setFormData((prev) => ({
+          ...prev,
+          fullName: user.name || prev.fullName,
+          email: user.email || prev.email,
+          phone: user.phone || prev.phone
+        }));
+      }
     }
-  }, [isOpen, job]);
+  }, [isOpen, job, user]);
 
   if (!isOpen) return null;
 
@@ -89,16 +100,37 @@ const ApplicationForm = ({ job, isOpen, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    if (!isAuthenticated) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: 'Please sign in first before applying for an internship opportunity. Click Sign In above to login with 1 click.'
+      }));
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulate frontend submission delay
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await api.applications.apply({
+        jobId: job._id || job.id,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        whyInterested: formData.whyInterested,
+        resumeFileName: formData.resumeFileName || 'resume.pdf'
+      });
       setIsSubmitted(true);
-    }, 700);
+    } catch (err) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: err.message || 'Unable to submit application at this time.'
+      }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetAndClose = () => {
@@ -192,6 +224,12 @@ const ApplicationForm = ({ job, isOpen, onClose }) => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="application-form" noValidate>
+              {errors.submit && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                  <AlertCircle size={16} />
+                  <span>{errors.submit}</span>
+                </div>
+              )}
               {/* Full Name */}
               <div className="form-group">
                 <label htmlFor="applicant-fullName" className="form-label">

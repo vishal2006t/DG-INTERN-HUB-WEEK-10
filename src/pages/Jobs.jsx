@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { jobsData, categoriesList } from '../data/jobs';
+import { api } from '../services/api';
 import JobCard from '../components/JobCard';
 import SearchBar from '../components/SearchBar';
 import FilterBar from '../components/FilterBar';
-import { Briefcase, SlidersHorizontal, RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 const Jobs = ({ onApplyJob }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,56 +18,73 @@ const Jobs = ({ onApplyJob }) => {
   const [selectedWorkType, setSelectedWorkType] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
 
+  // Backend Pagination state
+  const [page, setPage] = useState(1);
+  const [limit] = useState(9);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(jobsData.length);
+  const [jobs, setJobs] = useState(jobsData);
+  const [isLoading, setIsLoading] = useState(false);
+
   // Sync category param if url changes
   useEffect(() => {
     if (categoryParam && categoriesList.includes(categoryParam)) {
       setSelectedCategory(categoryParam);
+      setPage(1);
     }
   }, [categoryParam]);
 
+  // Fetch jobs from backend API whenever filters, search, sort, or page change
+  useEffect(() => {
+    let isCancelled = false;
+
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      try {
+        const res = await api.jobs.getAll({
+          search: searchTerm,
+          category: selectedCategory,
+          workType: selectedWorkType,
+          sort: sortBy,
+          page,
+          limit
+        });
+
+        if (!isCancelled && res?.data) {
+          setJobs(res.data);
+          setTotalPages(res.totalPages || 1);
+          setTotalJobs(res.total || res.data.length);
+        }
+      } catch (err) {
+        console.warn('Could not fetch from backend, using local state:', err.message);
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    const timer = setTimeout(fetchJobs, 250); // Debounce search
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchTerm, selectedCategory, selectedWorkType, sortBy, page, limit]);
+
   // Compute category counts
   const countsByCategory = useMemo(() => {
-    const counts = { All: jobsData.length };
+    const counts = { All: totalJobs };
     categoriesList.forEach((cat) => {
       if (cat !== 'All') {
-        counts[cat] = jobsData.filter((job) => job.category === cat).length;
+        counts[cat] = jobs.filter((job) => job.category === cat).length;
       }
     });
     return counts;
-  }, []);
-
-  // Filter and sort jobs
-  const filteredJobs = useMemo(() => {
-    return jobsData.filter((job) => {
-      // Search term matching
-      const matchesSearch =
-        searchTerm.trim() === '' ||
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.skills.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      // Category matching
-      const matchesCategory =
-        selectedCategory === 'All' || job.category === selectedCategory;
-
-      // Work type matching
-      const matchesWorkType =
-        selectedWorkType === 'All' || job.workType === selectedWorkType;
-
-      return matchesSearch && matchesCategory && matchesWorkType;
-    }).sort((a, b) => {
-      if (sortBy === 'stipend-high') {
-        const numA = parseInt(a.stipend.replace(/[^0-9]/g, ''), 10) || 0;
-        const numB = parseInt(b.stipend.replace(/[^0-9]/g, ''), 10) || 0;
-        return numB - numA;
-      }
-      return 0; // Default order
-    });
-  }, [searchTerm, selectedCategory, selectedWorkType, sortBy]);
+  }, [totalJobs, jobs]);
 
   const handleSelectCategory = (category) => {
     setSelectedCategory(category);
+    setPage(1);
     if (category === 'All') {
       searchParams.delete('category');
       setSearchParams(searchParams);
@@ -80,6 +98,7 @@ const Jobs = ({ onApplyJob }) => {
     setSelectedCategory('All');
     setSelectedWorkType('All');
     setSortBy('featured');
+    setPage(1);
     setSearchParams({});
   };
 
@@ -100,8 +119,14 @@ const Jobs = ({ onApplyJob }) => {
           <div className="jobs-search-section">
             <SearchBar 
               searchTerm={searchTerm} 
-              onSearchChange={setSearchTerm} 
-              onClear={() => setSearchTerm('')} 
+              onSearchChange={(val) => {
+                setSearchTerm(val);
+                setPage(1);
+              }} 
+              onClear={() => {
+                setSearchTerm('');
+                setPage(1);
+              }} 
               placeholder="Search internships by role, technology (e.g. React, Python), or company..."
             />
           </div>
@@ -124,7 +149,7 @@ const Jobs = ({ onApplyJob }) => {
           {/* Controls Bar */}
           <div className="listing-controls-bar">
             <div className="listing-results-count">
-              <span>Showing <strong>{filteredJobs.length}</strong> of {jobsData.length} opportunities</span>
+              <span>Showing <strong>{jobs.length}</strong> of {totalJobs} opportunities</span>
               {selectedCategory !== 'All' && (
                 <span className="active-filter-badge">
                   Category: {selectedCategory}
@@ -147,7 +172,10 @@ const Jobs = ({ onApplyJob }) => {
                       key={type}
                       type="button"
                       className={`work-type-btn ${selectedWorkType === type ? 'active' : ''}`}
-                      onClick={() => setSelectedWorkType(type)}
+                      onClick={() => {
+                        setSelectedWorkType(type);
+                        setPage(1);
+                      }}
                     >
                       {type}
                     </button>
@@ -159,11 +187,17 @@ const Jobs = ({ onApplyJob }) => {
               <div className="sort-dropdown-wrap">
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setPage(1);
+                  }}
                   className="sort-select"
                   aria-label="Sort internships"
                 >
                   <option value="featured">Featured / Default</option>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="deadline">Upcoming Deadline</option>
                   <option value="stipend-high">Highest Stipend</option>
                 </select>
               </div>
@@ -182,16 +216,65 @@ const Jobs = ({ onApplyJob }) => {
           </div>
 
           {/* Cards Grid or Empty State */}
-          {filteredJobs.length > 0 ? (
-            <div className="job-cards-grid">
-              {filteredJobs.map((job) => (
-                <JobCard 
-                  key={job.id} 
-                  job={job} 
-                  onApply={onApplyJob} 
-                />
-              ))}
+          {isLoading ? (
+            <div style={{ textAlign: 'center', padding: '3.5rem 0', color: '#64748b' }}>
+              <Loader2 size={32} className="spin-icon" style={{ animation: 'spin 1s linear infinite', marginBottom: '0.75rem' }} />
+              <p>Fetching opportunities from database...</p>
             </div>
+          ) : jobs.length > 0 ? (
+            <>
+              <div className="job-cards-grid">
+                {jobs.map((job) => (
+                  <JobCard 
+                    key={job._id || job.id} 
+                    job={job} 
+                    onApply={onApplyJob} 
+                  />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div 
+                  className="pagination-controls" 
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    gap: '0.75rem', 
+                    marginTop: '2.5rem',
+                    paddingTop: '1.5rem',
+                    borderTop: '1px solid #e2e8f0'
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    <ChevronLeft size={16} />
+                    <span>Previous</span>
+                  </button>
+
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
+                    Page {page} of {totalPages}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    <span>Next</span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="empty-results-card">
               <AlertCircle size={40} className="empty-icon text-muted" />

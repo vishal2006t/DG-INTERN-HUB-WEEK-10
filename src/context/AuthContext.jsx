@@ -14,7 +14,11 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [token, setToken] = useState(() => {
-    return localStorage.getItem('dg_auth_token') || null;
+    try {
+      return localStorage.getItem('dg_auth_token') || null;
+    } catch {
+      return null;
+    }
   });
 
   const [loading, setLoading] = useState(true);

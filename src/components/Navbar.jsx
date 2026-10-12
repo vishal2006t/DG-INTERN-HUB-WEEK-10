@@ -92,12 +92,18 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
       } catch {}
     }, 1480);
 
+    // Fallback failsafe: unconditionally guarantee animation ends
+    const fallbackTimer = setTimeout(() => {
+      setIntroState('done');
+    }, 1800);
+
     return () => {
       clearTimeout(timerAppear);
       clearTimeout(timerGlide);
       clearTimeout(timerDone);
+      clearTimeout(fallbackTimer);
     };
-  }, [introState]);
+  }, []); // Run once on mount
 
   const handleLinkClick = () => {
     setMobileMenuOpen(false);

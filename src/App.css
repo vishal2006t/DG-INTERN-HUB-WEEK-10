@@ -47,10 +47,18 @@
   pointer-events: none;
   opacity: 1;
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: autoHideLogoBackdrop 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes autoHideLogoBackdrop {
+  0% { opacity: 1; pointer-events: none; }
+  60% { opacity: 0.9; }
+  100% { opacity: 0; visibility: hidden; }
 }
 
 .logo-intro-backdrop.fade-out {
   opacity: 0;
+  visibility: hidden;
 }
 
 .logo-intro-animating-asset {

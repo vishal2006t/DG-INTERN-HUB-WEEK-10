@@ -13,5 +13,21 @@
   <body>
     <div id="root"></div>
     <script type="module" src="./src/main.jsx"></script>
+    <script>
+      // Fallback for static GitHub Pages root deployment where ./src/main.jsx is unbundled
+      if (window.location.hostname.includes('github.io') && !document.querySelector('script[src*="assets/index.js"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.crossOrigin = 'anonymous';
+        link.href = '/DG-INTERN-HUB-WEEK-8/assets/index.css';
+        document.head.appendChild(link);
+
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.crossOrigin = 'anonymous';
+        script.src = '/DG-INTERN-HUB-WEEK-8/assets/index.js';
+        document.body.appendChild(script);
+      }
+    </script>
   </body>
 </html>

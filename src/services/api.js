@@ -1,89 +1,106 @@
+import axios from 'axios';
 import { jobsData } from '../data/jobs';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = 
+  import.meta.env.VITE_API_BASE_URL || 
+  import.meta.env.VITE_API_URL || 
+  'http://localhost:5000/api';
 
-// Helper to get auth header
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('dg_auth_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` })
-  };
-};
+// Create Centralized Axios Client
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 15000
+});
 
-// Generic fetch wrapper with graceful error handling
-const fetchWithAuth = async (url, options = {}) => {
-  const headers = {
-    ...getAuthHeaders(),
-    ...(options.headers || {})
-  };
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      ...options,
-      headers
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'API request failed');
+// Request Interceptor: Attach JWT Bearer Token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('dg_auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return data;
-  } catch (error) {
-    console.warn(`[API] Error on ${url}:`, error.message);
-    throw error;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Uniform error handling and 401 recovery
+apiClient.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    if (error.response?.status === 401) {
+      const storedToken = localStorage.getItem('dg_auth_token');
+      if (storedToken) {
+        localStorage.removeItem('dg_auth_token');
+        localStorage.removeItem('dg_user');
+      }
+    }
+
+    const message = 
+      error.response?.data?.message || 
+      (Array.isArray(error.response?.data?.errors) ? error.response.data.errors.join(', ') : null) || 
+      error.message || 
+      'An unexpected network error occurred';
+
+    const customError = new Error(message);
+    customError.status = error.response?.status;
+    customError.errors = error.response?.data?.errors;
+    customError.data = error.response?.data;
+    return Promise.reject(customError);
   }
-};
+);
 
 export const api = {
-  // Auth endpoints
+  // Authentication Endpoints
   auth: {
     register: async (userData) => {
-      return fetchWithAuth('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      });
+      return apiClient.post('/auth/register', userData);
     },
     login: async (credentials) => {
-      return fetchWithAuth('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-      });
+      return apiClient.post('/auth/login', credentials);
     },
     getMe: async () => {
-      return fetchWithAuth('/auth/me');
+      return apiClient.get('/auth/me');
     },
     logout: async () => {
       try {
-        await fetchWithAuth('/auth/logout', { method: 'POST' });
-      } catch {
-        // ignore logout errors
+        await apiClient.post('/auth/logout');
+      } catch (err) {
+        console.info('[Auth] Server logout notification error (non-fatal):', err.message);
+      } finally {
+        localStorage.removeItem('dg_auth_token');
+        localStorage.removeItem('dg_user');
       }
-      localStorage.removeItem('dg_auth_token');
-      localStorage.removeItem('dg_user');
     }
   },
 
-  // Users endpoints
+  // User Profile Endpoints
   users: {
     getProfile: async () => {
-      return fetchWithAuth('/users/profile');
+      return apiClient.get('/users/profile');
     },
     updateProfile: async (profileData) => {
-      return fetchWithAuth('/users/profile', {
-        method: 'PUT',
-        body: JSON.stringify(profileData)
-      });
+      return apiClient.put('/users/profile', profileData);
+    },
+    deleteProfile: async () => {
+      return apiClient.delete('/users/profile');
     }
   },
 
-  // Jobs endpoints
+  // Jobs Endpoints
   jobs: {
     getAll: async (params = {}) => {
       const queryParams = new URLSearchParams();
       if (params.search) queryParams.set('search', params.search);
       if (params.category && params.category !== 'All') queryParams.set('category', params.category);
+      if (params.location && params.location !== 'All') queryParams.set('location', params.location);
       if (params.workType && params.workType !== 'All') queryParams.set('workType', params.workType);
       if (params.type && params.type !== 'All') queryParams.set('type', params.type);
+      if (params.skill && params.skill !== 'All') queryParams.set('skill', params.skill);
+      if (params.featured) queryParams.set('featured', params.featured);
       if (params.sort) queryParams.set('sort', params.sort);
       if (params.page) queryParams.set('page', params.page);
       if (params.limit) queryParams.set('limit', params.limit);
@@ -91,15 +108,18 @@ export const api = {
       const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
 
       try {
-        const result = await fetchWithAuth(`/jobs${qs}`);
-        return result;
+        const response = await apiClient.get(`/jobs${qs}`);
+        return response;
       } catch (err) {
-        // Graceful fallback to local dataset if server is warming up
-        console.info('[API Fallback] Serving local jobs data:', err.message);
+        console.warn('[API fallback] Server job query failed, providing cached dataset:', err.message);
         let list = [...jobsData];
         if (params.search) {
           const s = params.search.toLowerCase();
-          list = list.filter((j) => j.title.toLowerCase().includes(s) || j.company.toLowerCase().includes(s));
+          list = list.filter((j) => 
+            j.title?.toLowerCase().includes(s) || 
+            j.company?.toLowerCase().includes(s) ||
+            j.location?.toLowerCase().includes(s)
+          );
         }
         if (params.category && params.category !== 'All') {
           list = list.filter((j) => j.category === params.category);
@@ -107,6 +127,10 @@ export const api = {
         if (params.workType && params.workType !== 'All') {
           list = list.filter((j) => j.workType === params.workType);
         }
+        if (params.type && params.type !== 'All') {
+          list = list.filter((j) => j.type?.toLowerCase() === params.type.toLowerCase());
+        }
+
         return {
           success: true,
           page: 1,
@@ -120,64 +144,60 @@ export const api = {
 
     getById: async (id) => {
       try {
-        const result = await fetchWithAuth(`/jobs/${id}`);
-        return result.data;
+        const response = await apiClient.get(`/jobs/${id}`);
+        return response.data;
       } catch (err) {
-        const fallback = jobsData.find((j) => j.id === id || j.slug === id);
+        const fallback = jobsData.find((j) => j.id === id || j.slug === id || j._id === id);
         if (fallback) return fallback;
         throw err;
       }
     },
 
     create: async (jobData) => {
-      return fetchWithAuth('/jobs', {
-        method: 'POST',
-        body: JSON.stringify(jobData)
-      });
+      return apiClient.post('/jobs', jobData);
     },
 
     update: async (id, jobData) => {
-      return fetchWithAuth(`/jobs/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(jobData)
-      });
+      return apiClient.put(`/jobs/${id}`, jobData);
     },
 
     delete: async (id) => {
-      return fetchWithAuth(`/jobs/${id}`, {
-        method: 'DELETE'
-      });
+      return apiClient.delete(`/jobs/${id}`);
     }
   },
 
-  // Applications endpoints
+  // Applications Endpoints
   applications: {
     apply: async (applicationData) => {
-      return fetchWithAuth('/applications', {
-        method: 'POST',
-        body: JSON.stringify(applicationData)
-      });
+      return apiClient.post('/applications', applicationData);
     },
 
     getMy: async () => {
-      return fetchWithAuth('/applications/my');
+      return apiClient.get('/applications/my');
     },
 
     getById: async (id) => {
-      return fetchWithAuth(`/applications/${id}`);
+      return apiClient.get(`/applications/${id}`);
     },
 
     updateStatus: async (id, statusData) => {
-      return fetchWithAuth(`/applications/${id}/status`, {
-        method: 'PUT',
-        body: JSON.stringify(statusData)
-      });
+      return apiClient.put(`/applications/${id}/status`, statusData);
     },
 
     delete: async (id) => {
-      return fetchWithAuth(`/applications/${id}`, {
-        method: 'DELETE'
+      return apiClient.delete(`/applications/${id}`);
+    },
+
+    uploadResume: async (file) => {
+      const formData = new FormData();
+      formData.append('resume', file);
+      return apiClient.post('/applications/upload-resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
     }
   }
 };
+
+export default api;

@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VITE_BASE_PATH || '/DG-INTERN-HUB-WEEK-8/',
+  base: process.env.VITE_BASE_PATH || './',
   build: {
     rollupOptions: {
       output: {

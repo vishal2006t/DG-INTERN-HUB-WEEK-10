@@ -76,7 +76,7 @@ const Jobs = ({ onApplyJob }) => {
     const counts = { All: totalJobs };
     categoriesList.forEach((cat) => {
       if (cat !== 'All') {
-        counts[cat] = jobs.filter((job) => job.category === cat).length;
+        counts[cat] = jobs.filter((job) => job?.category === cat).length;
       }
     });
     return counts;

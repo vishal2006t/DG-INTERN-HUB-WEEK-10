@@ -9,6 +9,9 @@ import rateLimit from 'express-rate-limit';
 import { connectDB, getConnectionStatus } from './config/database.js';
 import { seedInitialData } from './utils/seeder.js';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 // Route imports
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -18,8 +21,14 @@ import applicationRoutes from './routes/applicationRoutes.js';
 // Middleware imports
 import { notFoundHandler, errorHandler } from './middleware/errorMiddleware.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Security 1: Helmet to set secure HTTP response headers
 app.use(

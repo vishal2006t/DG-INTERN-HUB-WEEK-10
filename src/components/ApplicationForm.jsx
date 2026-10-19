@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 const ApplicationForm = ({ job, isOpen, onClose }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, openAuth } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -114,12 +114,26 @@ const ApplicationForm = ({ job, isOpen, onClose }) => {
 
     setIsSubmitting(true);
     try {
+      let uploadedResumeUrl = formData.resumeFileName || 'resume.pdf';
+      if (formData.resumeFile) {
+        try {
+          const uploadRes = await api.applications.uploadResume(formData.resumeFile);
+          const fileUrl = uploadRes?.data?.resumeUrl || uploadRes?.data?.fileUrl || uploadRes?.resumeUrl || uploadRes?.fileUrl;
+          if (fileUrl) {
+            uploadedResumeUrl = fileUrl;
+          }
+        } catch (uploadErr) {
+          console.warn('Resume file upload warning, proceeding with filename:', uploadErr.message);
+        }
+      }
+
       await api.applications.apply({
         jobId: job._id || job.id,
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
         whyInterested: formData.whyInterested,
+        resumeUrl: uploadedResumeUrl,
         resumeFileName: formData.resumeFileName || 'resume.pdf'
       });
       setIsSubmitted(true);
@@ -225,9 +239,24 @@ const ApplicationForm = ({ job, isOpen, onClose }) => {
           ) : (
             <form onSubmit={handleSubmit} className="application-form" noValidate>
               {errors.submit && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }}>
-                  <AlertCircle size={16} />
-                  <span>{errors.submit}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.85rem 1rem', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{errors.submit}</span>
+                  </div>
+                  {!isAuthenticated && openAuth && (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      style={{ alignSelf: 'flex-start', marginTop: '0.25rem' }}
+                      onClick={() => {
+                        onClose();
+                        openAuth('login');
+                      }}
+                    >
+                      Sign In Now
+                    </button>
+                  )}
                 </div>
               )}
               {/* Full Name */}

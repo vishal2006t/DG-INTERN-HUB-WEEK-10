@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Star, ShieldCheck } from 'lucide-react';
 import { jobsData, platformStats, whyChooseUsFeatures } from '../data/jobs';
 import JobCard from '../components/JobCard';
 import FeatureCard from '../components/FeatureCard';
 import HowItWorks from '../components/HowItWorks';
+import { api } from '../services/api';
 
 const Home = ({ onApplyJob }) => {
   const navigate = useNavigate();
-  // Get 3-4 featured jobs
-  const featuredJobs = jobsData.filter((j) => j.featured).slice(0, 4);
+  const [featuredJobs, setFeaturedJobs] = useState(() => 
+    jobsData.filter((j) => j.featured).slice(0, 4)
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    api.jobs.getAll({ featured: true, limit: 4 })
+      .then((res) => {
+        if (isMounted && res?.data && res.data.length > 0) {
+          setFeaturedJobs(res.data);
+        }
+      })
+      .catch((err) => {
+        console.info('Using local featured jobs data:', err.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const scrollToHowItWorks = (e) => {
     e.preventDefault();
@@ -160,14 +179,18 @@ const Home = ({ onApplyJob }) => {
               </p>
             </div>
             <Link to="/jobs" className="btn btn-outline-primary btn-sm view-all-link">
-              <span>View All 8 Opportunities</span>
+              <span>View All Opportunities</span>
               <ArrowRight size={14} />
             </Link>
           </div>
 
           <div className="job-cards-grid">
             {featuredJobs.map((job) => (
-              <JobCard key={job.id} job={job} onApply={onApplyJob} />
+              <JobCard 
+                key={job._id || job.id} 
+                job={job} 
+                onApply={onApplyJob} 
+              />
             ))}
           </div>
 

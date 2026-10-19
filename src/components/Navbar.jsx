@@ -185,6 +185,14 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
             >
               Jobs
             </NavLink>
+            {isAuthenticated && (
+              <NavLink 
+                to="/dashboard" 
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
+                Dashboard
+              </NavLink>
+            )}
             <NavLink 
               to="/contact" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -225,6 +233,8 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
 
                 <div 
                   className="user-profile-badge" 
+                  onClick={() => navigate('/profile')}
+                  title="View / Edit Profile"
                   style={{
                     display: 'flex', 
                     alignItems: 'center', 
@@ -234,7 +244,8 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
                     borderRadius: '20px',
                     fontSize: '0.825rem',
                     fontWeight: 500,
-                    color: '#0f172a'
+                    color: '#0f172a',
+                    cursor: 'pointer'
                   }}
                 >
                   <User size={13} className="text-primary" />
@@ -320,6 +331,15 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
               >
                 Jobs
               </NavLink>
+              {isAuthenticated && (
+                <NavLink 
+                  to="/dashboard" 
+                  className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={handleLinkClick}
+                >
+                  Dashboard
+                </NavLink>
+              )}
               <NavLink 
                 to="/contact" 
                 className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`}

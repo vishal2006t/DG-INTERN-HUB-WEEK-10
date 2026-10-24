@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DG Interns Hub - Advanced React.js Job & Internship Portal (Week 10)
 
 [![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)
@@ -361,16 +362,16 @@ To review and commit your Week 9 project without modifying past git history:
 # 1. Review status of modified and new files
 git status
 
-# 2. Stage all Week 9 updates
+# 2. Stage all Week 10 updates
 git add .
 
 # 3. Commit with a structured message
-git commit -m "feat(week-9): complete advanced React.js job & internship portal with routing, auth, dashboard, and API integration"
+git commit -m "feat(week-10): complete advanced React.js job & internship portal with role-based dashboards, notifications, and analytics"
 
 # 4. Review the commit log
 git log -n 3 --oneline
 
-# 5. Push to your Week 9 GitHub repository
+# 5. Push to your Week 10 GitHub repository
 git push origin main
 ```
 
@@ -384,17 +385,19 @@ git push origin main
 
 ## 🎓 Learning Outcomes
 - Designing modern Single-Page Applications with React 19 and Vite.
-- Advanced routing patterns with React Router DOM (protected routes, route parameters, location memory).
+- Advanced routing patterns with React Router DOM (protected routes, role-based dashboards, route parameters).
 - Centralized Axios client architecture with request and response interceptors.
-- Global state management using React Context API (`Auth`, `Theme`, `Toast`, `SavedJobs`).
-- Debounced search implementation for performant user input handling.
+- Global state management using React Context API (`Auth`, `Theme`, `Toast`, `Notification`, `SavedJobs`).
+- Persistent database-backed notifications with periodic background polling.
+- Role-specific dashboard views (Candidate, Recruiter, Admin) with real MongoDB Atlas metrics.
+- RFC-compliant CSV data export with field escaping and role authorization.
 - Secure multipart file uploads with client-side and server-side PDF validation.
 - End-to-end integration between Express/MongoDB and React SPAs.
 
 ---
 
 ## 🔗 Repository Information
-- **Repository**: [https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-9](https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-9)
+- **Repository**: [https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-10](https://github.com/vishal2006t/DG-INTERN-HUB-WEEK-10)
 - **Author**: Vishal T
-- **Internship Track**: Advanced Web Development Internship (Week 9)
+- **Internship Track**: Advanced Web Development Internship (Week 10)
 

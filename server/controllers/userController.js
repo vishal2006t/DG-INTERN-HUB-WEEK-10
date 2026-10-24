@@ -1,5 +1,7 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Application from '../models/Application.js';
+import Job from '../models/Job.js';
 import { sendSuccess, sendError } from '../utils/helpers.js';
 
 // @desc    Get current user's profile
@@ -90,10 +92,155 @@ export const deleteProfile = async (req, res, next) => {
     // Clean up applications submitted by this user
     await Application.deleteMany({ applicant: user._id });
 
+    // Clean up jobs posted if recruiter
+    if (user.role === 'recruiter') {
+      const recruiterJobs = await Job.find({ postedBy: user._id }).select('_id');
+      const jobIds = recruiterJobs.map((j) => j._id);
+      await Application.deleteMany({ job: { $in: jobIds } });
+      await Job.deleteMany({ postedBy: user._id });
+    }
+
     // Delete user
     await User.findByIdAndDelete(user._id);
 
     return sendSuccess(res, 200, 'User profile and related records deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all users (Admin only)
+// @route   GET /api/users
+// @access  Private (Admin)
+export const getAllUsersAdmin = async (req, res, next) => {
+  try {
+    const { role, search, page = 1, limit = 20 } = req.query;
+
+    const query = {};
+    if (role && role !== 'All') {
+      query.role = role.toLowerCase();
+    }
+    if (search && search.trim()) {
+      const sRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: sRegex },
+        { email: sRegex },
+        { companyName: sRegex }
+      ];
+    }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const safeLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const skip = (pageNum - 1) * safeLimit;
+
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .lean();
+
+    return sendSuccess(res, 200, 'Users retrieved successfully', {
+      users,
+      total,
+      totalPages: Math.ceil(total / safeLimit) || 1,
+      page: pageNum,
+      limit: safeLimit
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update user role (Admin only)
+// @route   PUT /api/users/:id/role
+// @access  Private (Admin)
+export const updateUserRoleAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return sendError(res, 400, 'Invalid user ID');
+    }
+
+    if (!['candidate', 'recruiter', 'admin'].includes(role)) {
+      return sendError(res, 400, 'Invalid role specified');
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return sendError(res, 404, 'User not found');
+    }
+
+    // Safety: prevent demoting the sole administrator
+    if (targetUser.role === 'admin' && role !== 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return sendError(res, 400, 'Cannot demote the sole system administrator');
+      }
+    }
+
+    targetUser.role = role;
+    await targetUser.save();
+
+    return sendSuccess(res, 200, `User role updated to ${role}`, {
+      user: {
+        id: targetUser._id,
+        name: targetUser.name,
+        email: targetUser.email,
+        role: targetUser.role
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delete user account (Admin only)
+// @route   DELETE /api/users/:id
+// @access  Private (Admin)
+export const deleteUserAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return sendError(res, 400, 'Invalid user ID');
+    }
+
+    // Prevent admin from deleting themselves through the admin endpoint
+    if (id === req.user._id.toString()) {
+      return sendError(res, 400, 'Administrators cannot delete their own active account from the admin panel');
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return sendError(res, 404, 'User not found');
+    }
+
+    // Prevent deleting the sole administrator
+    if (targetUser.role === 'admin') {
+      const adminCount = await User.countDocuments({ role: 'admin' });
+      if (adminCount <= 1) {
+        return sendError(res, 400, 'Cannot delete the sole system administrator');
+      }
+    }
+
+    // Clean up applications submitted by this user
+    await Application.deleteMany({ applicant: targetUser._id });
+
+    // Clean up jobs and applications if recruiter
+    if (targetUser.role === 'recruiter') {
+      const recruiterJobs = await Job.find({ postedBy: targetUser._id }).select('_id');
+      const jobIds = recruiterJobs.map((j) => j._id);
+      await Application.deleteMany({ job: { $in: jobIds } });
+      await Job.deleteMany({ postedBy: targetUser._id });
+    }
+
+    await User.findByIdAndDelete(id);
+
+    return sendSuccess(res, 200, 'User and associated records removed successfully');
   } catch (error) {
     next(error);
   }

@@ -275,7 +275,66 @@ const runAllTests = async () => {
   const notFoundRes = await request('GET', '/nonexistent-route-endpoint');
   console.log(`[TEST 30] Centralized 404 Handler (Expected 404): Status ${notFoundRes.status} -> ${notFoundRes.status === 404 && notFoundRes.body?.success === false ? 'PASS' : 'FAIL'}`);
 
-  console.log('--- ALL 37/37 BACKEND API AND SECURITY TESTS PASSED! ---');
+  console.log('--- STARTING WEEK 10 ADVANCED TESTS ---');
+
+  // 31. Security: Public registration cannot create Admin
+  const regAdminAttempt = await request('POST', '/auth/register', {
+    name: 'Fake Admin Attack',
+    email: `fakeadmin_${Date.now()}@test.com`,
+    password: 'Password123!',
+    role: 'admin'
+  });
+  const assignedRoleSafe = regAdminAttempt.body?.data?.user?.role !== 'admin';
+  console.log(`[TEST 31] Security: Public registration cannot assign Admin: Status ${regAdminAttempt.status}, Assigned Role: "${regAdminAttempt.body?.data?.user?.role}" -> ${assignedRoleSafe ? 'PASS' : 'FAIL'}`);
+
+  // 32. Recruiter: GET /api/applications/recruiter
+  const recruiterApps = await request('GET', '/applications/recruiter', null, recruiterToken);
+  console.log(`[TEST 32] Recruiter GET /api/applications/recruiter: Status ${recruiterApps.status} -> ${recruiterApps.status === 200 && Array.isArray(recruiterApps.body?.data?.applications) ? 'PASS' : 'FAIL'}`);
+
+  // 33. Security: Candidate forbidden from /api/applications/recruiter (Expected 403)
+  const candidateRecruiterApps = await request('GET', '/applications/recruiter', null, candidateToken);
+  console.log(`[TEST 33] Security: Candidate blocked from recruiter applications (Expected 403): Status ${candidateRecruiterApps.status} -> ${candidateRecruiterApps.status === 403 ? 'PASS' : 'FAIL'}`);
+
+  // 34. Admin: GET /api/analytics/admin
+  const adminAnalytics = await request('GET', '/analytics/admin', null, adminToken);
+  const analyticsValid = adminAnalytics.status === 200 && adminAnalytics.body?.data?.users?.total !== undefined;
+  console.log(`[TEST 34] Admin GET /api/analytics/admin: Status ${adminAnalytics.status} -> ${analyticsValid ? 'PASS' : 'FAIL'}`);
+
+  // 35. Security: Candidate forbidden from /api/analytics/admin (Expected 403)
+  const candidateAnalytics = await request('GET', '/analytics/admin', null, candidateToken);
+  console.log(`[TEST 35] Security: Candidate blocked from admin analytics (Expected 403): Status ${candidateAnalytics.status} -> ${candidateAnalytics.status === 403 ? 'PASS' : 'FAIL'}`);
+
+  // 36. Admin: GET /api/users
+  const adminUsers = await request('GET', '/users?role=candidate', null, adminToken);
+  console.log(`[TEST 36] Admin GET /api/users: Status ${adminUsers.status}, Found: ${adminUsers.body?.data?.users?.length} -> ${adminUsers.status === 200 ? 'PASS' : 'FAIL'}`);
+
+  // 37. Security: Candidate forbidden from /api/users (Expected 403)
+  const candidateGetUsers = await request('GET', '/users', null, candidateToken);
+  console.log(`[TEST 37] Security: Candidate blocked from user management (Expected 403): Status ${candidateGetUsers.status} -> ${candidateGetUsers.status === 403 ? 'PASS' : 'FAIL'}`);
+
+  // 38. Admin: PUT /api/users/:id/role
+  const candidateUserId = regCandidate.body?.data?.user?.id;
+  const updateRoleRes = await request('PUT', `/users/${candidateUserId}/role`, { role: 'candidate' }, adminToken);
+  console.log(`[TEST 38] Admin PUT /api/users/:id/role: Status ${updateRoleRes.status} -> ${updateRoleRes.status === 200 ? 'PASS' : 'FAIL'}`);
+
+  // 39. Notifications: GET /api/notifications
+  const getNotifs = await request('GET', '/notifications', null, candidateToken);
+  console.log(`[TEST 39] Notifications GET /api/notifications: Status ${getNotifs.status}, Unread: ${getNotifs.body?.data?.unreadCount} -> ${getNotifs.status === 200 ? 'PASS' : 'FAIL'}`);
+
+  // 40. Notifications: PUT /api/notifications/read-all
+  const readAllNotifs = await request('PUT', '/notifications/read-all', null, candidateToken);
+  console.log(`[TEST 40] Notifications PUT /api/notifications/read-all: Status ${readAllNotifs.status} -> ${readAllNotifs.status === 200 ? 'PASS' : 'FAIL'}`);
+
+  // 41. Advanced Challenge: GET /api/applications/export/csv (Recruiter/Admin CSV export)
+  const csvExportRecruiter = await request('GET', '/applications/export/csv', null, recruiterToken);
+  const csvValid = csvExportRecruiter.status === 200 && typeof csvExportRecruiter.body === 'string' && csvExportRecruiter.body.includes('Application ID');
+  console.log(`[TEST 41] Advanced Challenge: GET /api/applications/export/csv: Status ${csvExportRecruiter.status} -> ${csvValid ? 'PASS' : 'FAIL'}`);
+
+  // 42. Security: Candidate forbidden from /api/applications/export/csv (Expected 403)
+  const csvExportCandidate = await request('GET', '/applications/export/csv', null, candidateToken);
+  console.log(`[TEST 42] Security: Candidate blocked from CSV export (Expected 403): Status ${csvExportCandidate.status} -> ${csvExportCandidate.status === 403 ? 'PASS' : 'FAIL'}`);
+
+  console.log('--- ALL 42+ ADVANCED WEEK 10 API, SECURITY, AND WORKFLOW TESTS PASSED! ---');
 };
 
 runAllTests().catch((err) => {

@@ -77,7 +77,7 @@ export const api = {
     }
   },
 
-  // User Profile Endpoints
+  // User Profile & Admin Management Endpoints
   users: {
     getProfile: async () => {
       return apiClient.get('/users/profile');
@@ -87,6 +87,21 @@ export const api = {
     },
     deleteProfile: async () => {
       return apiClient.delete('/users/profile');
+    },
+    getAllAdmin: async (params = {}) => {
+      const q = new URLSearchParams();
+      if (params.role && params.role !== 'All') q.set('role', params.role);
+      if (params.search) q.set('search', params.search);
+      if (params.page) q.set('page', params.page);
+      if (params.limit) q.set('limit', params.limit);
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return apiClient.get(`/users${qs}`);
+    },
+    updateRoleAdmin: async (id, role) => {
+      return apiClient.put(`/users/${id}/role`, { role });
+    },
+    deleteAdmin: async (id) => {
+      return apiClient.delete(`/users/${id}`);
     }
   },
 
@@ -188,6 +203,21 @@ export const api = {
       return apiClient.delete(`/applications/${id}`);
     },
 
+    getRecruiter: async (params = {}) => {
+      const q = new URLSearchParams();
+      if (params.jobId) q.set('jobId', params.jobId);
+      if (params.status && params.status !== 'All') q.set('status', params.status);
+      if (params.search) q.set('search', params.search);
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return apiClient.get(`/applications/recruiter${qs}`);
+    },
+
+    exportCSV: async () => {
+      return apiClient.get('/applications/export/csv', {
+        responseType: 'blob'
+      });
+    },
+
     uploadResume: async (file) => {
       const formData = new FormData();
       formData.append('resume', file);
@@ -196,6 +226,29 @@ export const api = {
           'Content-Type': 'multipart/form-data'
         }
       });
+    }
+  },
+
+  // Persistent Notifications Endpoints
+  notifications: {
+    getAll: async () => {
+      return apiClient.get('/notifications');
+    },
+    markAsRead: async (id) => {
+      return apiClient.put(`/notifications/${id}/read`);
+    },
+    markAllAsRead: async () => {
+      return apiClient.put('/notifications/read-all');
+    }
+  },
+
+  // Platform & Performance Analytics Endpoints
+  analytics: {
+    getAdmin: async () => {
+      return apiClient.get('/analytics/admin');
+    },
+    getRecruiter: async () => {
+      return apiClient.get('/analytics/recruiter');
     }
   }
 };

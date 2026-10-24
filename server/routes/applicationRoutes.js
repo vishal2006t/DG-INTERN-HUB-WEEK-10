@@ -2,9 +2,11 @@ import express from 'express';
 import {
   applyForJob,
   getMyApplications,
+  getRecruiterApplications,
   getApplicationById,
   updateApplicationStatus,
-  deleteApplication
+  deleteApplication,
+  exportApplicationsCSV
 } from '../controllers/applicationController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';
 import { authorizeRole } from '../middleware/roleMiddleware.js';
@@ -20,7 +22,7 @@ const router = express.Router();
 router.use(authenticateUser);
 
 // Resume upload route (PDF only, max 5MB)
-router.post('/upload-resume', (req, res, next) => {
+router.post('/upload-resume', (req, res, _next) => {
   uploadResume.single('resume')(req, res, (err) => {
     if (err) {
       return sendError(res, 400, err.message || 'File upload failed');
@@ -40,7 +42,14 @@ router.post('/upload-resume', (req, res, next) => {
 router.route('/')
   .post(validateBody(validateApplication), applyForJob);
 
+// Candidate applications
 router.get('/my', getMyApplications);
+
+// Recruiter applications for their posted jobs (or all for admin)
+router.get('/recruiter', authorizeRole('recruiter', 'admin'), getRecruiterApplications);
+
+// CSV Export for recruiter / admin
+router.get('/export/csv', authorizeRole('recruiter', 'admin'), exportApplicationsCSV);
 
 router.route('/:id')
   .get(validateObjectId('id'), getApplicationById)

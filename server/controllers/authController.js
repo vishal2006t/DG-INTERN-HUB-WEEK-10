@@ -26,8 +26,8 @@ export const register = async (req, res, next) => {
       return sendError(res, 409, 'An account with this email address already exists');
     }
 
-    // Default to candidate if not specified or invalid
-    const assignedRole = ['candidate', 'recruiter', 'admin'].includes(role) ? role : 'candidate';
+    // Default to candidate if not specified or invalid (admin cannot be self-assigned via public registration)
+    const assignedRole = ['candidate', 'recruiter'].includes(role) ? role : 'candidate';
 
     // Create user (password is automatically hashed by Mongoose pre-save hook)
     const user = await User.create({

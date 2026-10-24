@@ -1,4 +1,4 @@
-# DG Interns Hub - Advanced React.js Job & Internship Portal (Week 9)
+# DG Interns Hub - Advanced React.js Job & Internship Portal (Week 10)
 
 [![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8.x-purple.svg)](https://vitejs.dev/)
@@ -7,17 +7,17 @@
 [![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green.svg)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-5.x-lightgrey.svg)](https://expressjs.com/)
 [![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas_Connected-brightgreen.svg)](https://www.mongodb.com/)
-[![Tests](https://img.shields.io/badge/Tests-37%2F37_Passed-success.svg)](server/utils/test-apis.js)
+[![Tests](https://img.shields.io/badge/Tests-42%2F42_Passed-success.svg)](server/utils/test-apis.js)
 
-**Suggested Repository Name:** `web-development-week-9-react-job-portal`
+**Suggested Repository Name:** `web-development-week-10-react-job-portal`
 
 ---
 
 ## 🌟 Project Overview
 
-**DG Interns Hub (Week 9)** is an advanced, production-grade **React.js Job & Internship Portal** built for early-career developers, students, and recruiters. Elevating the Week 8 backend foundation, this release implements a modular, high-performance single-page application (SPA) architecture powered by **React 19**, **Vite**, **React Router DOM**, **Axios**, and the **React Context API**.
+**DG Interns Hub (Week 10)** is an advanced, production-grade **React.js Job & Internship Portal** built for early-career developers, students, and recruiters. Elevating the Week 9 frontend foundation, this release implements role-based authorization with three dedicated dashboards (**Candidate**, **Recruiter**, **Admin**), **Persistent In-App Notifications**, a live **Dark/Light Mode** theme switcher, **Route-level Code Splitting** via `React.lazy` and `Suspense`, and a high-performance **CSV Export** engine for recruitment data.
 
-The portal delivers an original, aesthetic user experience featuring persistent **Dark/Light Mode**, dynamic **Toast Notifications**, **Skeleton Loading screens**, multi-criteria **debounced search & filtering**, a protected **Candidate Dashboard** calculating real metrics from MongoDB Atlas data, and secure **PDF Resume Uploads**.
+The portal delivers an original, aesthetic user experience featuring persistent **Dark/Light Mode**, dynamic **Toast Notifications**, **Persistent Notifications Bell Center**, **Skeleton Loading screens**, multi-criteria **debounced search & filtering**, role-specific management pipelines, and secure **PDF Resume Uploads**.
 
 ---
 
@@ -303,7 +303,7 @@ To facilitate quick testing of recruiter vs. candidate roles, use the following 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/health` | Public | Backend health & database connection diagnostic |
-| `POST` | `/api/auth/register` | Public | Register new candidate or recruiter account |
+| `POST` | `/api/auth/register` | Public | Register new candidate or recruiter account (safe policy) |
 | `POST` | `/api/auth/login` | Public | Authenticate user and receive JWT Bearer token |
 | `GET` | `/api/auth/me` | Authenticated | Retrieve current authenticated user profile |
 | `POST` | `/api/auth/logout` | Authenticated | Clear client session |
@@ -314,10 +314,20 @@ To facilitate quick testing of recruiter vs. candidate roles, use the following 
 | `DELETE` | `/api/jobs/:id` | Recruiter/Admin | Remove job posting and related applications |
 | `POST` | `/api/applications/upload-resume` | Authenticated | Upload PDF resume (max 5MB) |
 | `POST` | `/api/applications` | Authenticated | Submit new internship application |
-| `GET` | `/api/applications/my` | Authenticated | Retrieve applications submitted by the logged-in user |
+| `GET` | `/api/applications/my` | Authenticated | Retrieve applications submitted by the logged-in candidate |
+| `GET` | `/api/applications/recruiter` | Recruiter/Admin | Retrieve all applications submitted for recruiter's posted jobs |
 | `GET` | `/api/applications/:id` | Authenticated | View detailed application submission |
 | `PUT` | `/api/applications/:id/status` | Recruiter/Admin | Update application status (`pending`, `shortlisted`, `accepted`, `rejected`) |
 | `DELETE` | `/api/applications/:id` | Authenticated | Withdraw application |
+| `GET` | `/api/applications/export/csv` | Recruiter/Admin | Export applications dataset as sanitized CSV spreadsheet |
+| `GET` | `/api/notifications` | Authenticated | Retrieve user notifications & unread count |
+| `PUT` | `/api/notifications/:id/read` | Authenticated | Mark individual notification as read |
+| `PUT` | `/api/notifications/read-all` | Authenticated | Mark all notifications as read for current user |
+| `GET` | `/api/analytics/admin` | Admin | Real-time platform analytics (users, jobs, applications, DB health) |
+| `GET` | `/api/analytics/recruiter` | Recruiter/Admin | Conversion pipeline metrics for recruiter's jobs |
+| `GET` | `/api/users` | Admin | Search and filter registered users directory |
+| `PUT` | `/api/users/:id/role` | Admin | Safely modify user role (`candidate`, `recruiter`, `admin`) |
+| `DELETE` | `/api/users/:id` | Admin | Remove user account and associated submissions |
 | `GET` | `/api/users/profile` | Authenticated | View authenticated candidate profile |
 | `PUT` | `/api/users/profile` | Authenticated | Update candidate name, phone, bio, and skills list |
 | `DELETE` | `/api/users/profile` | Authenticated | Permanently delete account and data |

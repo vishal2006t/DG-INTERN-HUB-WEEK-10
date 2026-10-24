@@ -24,8 +24,10 @@ import { api } from '../services/api';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
 import Button from '../components/Button';
+import RecruiterDashboardView from '../components/RecruiterDashboardView';
+import AdminDashboardView from '../components/AdminDashboardView';
 
-const Dashboard = () => {
+const Dashboard = ({ onOpenPostJob }) => {
   const { user } = useAuth();
   const { savedJobs } = useSavedJobs();
 
@@ -74,6 +76,22 @@ const Dashboard = () => {
         return <span className="badge badge-amber">Pending</span>;
     }
   };
+
+  if (user?.role === 'recruiter') {
+    return (
+      <div className="dashboard-page-container container">
+        <RecruiterDashboardView user={user} onOpenPostJob={onOpenPostJob} />
+      </div>
+    );
+  }
+
+  if (user?.role === 'admin') {
+    return (
+      <div className="dashboard-page-container container">
+        <AdminDashboardView user={user} />
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page-container container">

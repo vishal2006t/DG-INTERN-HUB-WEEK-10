@@ -3,6 +3,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowRight, User, LogOut, FileText, PlusCircle } from 'lucide-react';
 import dgLogo from '../assets/dg-interns-hub-logo.png';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
+import NotificationDropdown from './NotificationDropdown';
 
 const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
   const { user, isAuthenticated, logout, openAuth } = useAuth();
@@ -287,6 +289,12 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
               </button>
             )}
 
+            {/* Persistent Notifications (Authenticated) */}
+            {isAuthenticated && <NotificationDropdown />}
+
+            {/* Dark/Light Theme Switcher */}
+            <ThemeToggle />
+
             <button 
               type="button" 
               className="btn btn-primary btn-sm nav-cta-btn"
@@ -349,7 +357,11 @@ const Navbar = ({ onOpenMyApplications, onOpenPostJob }) => {
               </NavLink>
 
               {/* Mobile Auth Actions */}
-              <div style={{ padding: '0.75rem 0', borderTop: '1px solid #e2e8f0', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ padding: '0.75rem 0', borderTop: '1px solid var(--border-light, #e2e8f0)', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0.5rem' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>Theme Mode</span>
+                  <ThemeToggle />
+                </div>
                 {isAuthenticated ? (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}>

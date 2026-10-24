@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -7,20 +7,29 @@ import AuthModal from './components/AuthModal';
 import MyApplicationsModal from './components/MyApplicationsModal';
 import PostJobModal from './components/PostJobModal';
 import Toast from './components/Toast';
-import Home from './pages/Home';
-import Jobs from './pages/Jobs';
-import JobDetailsPage from './pages/JobDetailsPage';
-import Contact from './pages/Contact';
-import Dashboard from './pages/Dashboard';
-import Applications from './pages/Applications';
-import Profile from './pages/Profile';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Loader from './components/Loader';
+import ProtectedRoute from './routes/ProtectedRoute';
+
+// Global Context Providers
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { SavedJobsProvider } from './context/SavedJobsContext';
 import { ToastProvider } from './context/ToastContext';
 import { jobsData } from './data/jobs';
-import ProtectedRoute from './routes/ProtectedRoute';
+
+// Performance Optimization: Route-level code splitting via dynamic imports
+const Home = lazy(() => import('./pages/Home'));
+const Jobs = lazy(() => import('./pages/Jobs'));
+const JobDetailsPage = lazy(() => import('./pages/JobDetailsPage'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Applications = lazy(() => import('./pages/Applications'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
 import './App.css';
 import './styles/week9-pages.css';
 
@@ -54,106 +63,129 @@ function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <SavedJobsProvider>
-          <ToastProvider>
-            <ScrollToTop />
-            <div className="app-layout">
-              {/* Navigation Bar */}
-              <Navbar 
-                onOpenMyApplications={() => setIsMyAppsOpen(true)}
-                onOpenPostJob={() => setIsPostJobOpen(true)}
-              />
+        <ThemeProvider>
+          <NotificationProvider>
+            <SavedJobsProvider>
+              <ToastProvider>
+                <ScrollToTop />
+                <div className="app-layout">
+                  {/* Navigation Bar */}
+                  <Navbar 
+                    onOpenMyApplications={() => setIsMyAppsOpen(true)}
+                    onOpenPostJob={() => setIsPostJobOpen(true)}
+                  />
 
-              {/* Main Content Area */}
-              <main className="main-content" id="main-content">
-                <Routes>
-                  <Route 
-                    path="/" 
-                    element={<Home onApplyJob={handleOpenApplyModal} />} 
-                  />
-                  <Route 
-                    path="/jobs" 
-                    element={<Jobs onApplyJob={handleOpenApplyModal} />} 
-                  />
-                  <Route 
-                    path="/jobs/:id" 
-                    element={<JobDetailsPage onApplyJob={handleOpenApplyModal} />} 
-                  />
-                  <Route 
-                    path="/contact" 
-                    element={<Contact />} 
-                  />
-                  {/* Week 9 Dedicated Pages */}
-                  <Route 
-                    path="/dashboard" 
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/applications" 
-                    element={
-                      <ProtectedRoute>
-                        <Applications />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/login" 
-                    element={<Login />} 
-                  />
-                  <Route 
-                    path="/register" 
-                    element={<Register />} 
-                  />
-                  {/* Fallback route to Home */}
-                  <Route 
-                    path="*" 
-                    element={<Home onApplyJob={handleOpenApplyModal} />} 
-                  />
-                </Routes>
-              </main>
+                  {/* Main Content Area with Lazy-loaded Route Suspense */}
+                  <main className="main-content" id="main-content">
+                    <Suspense
+                      fallback={
+                        <div
+                          style={{
+                            minHeight: '60vh',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Loader type="spinner" text="Loading content..." />
+                        </div>
+                      }
+                    >
+                      <Routes>
+                        <Route 
+                          path="/" 
+                          element={<Home onApplyJob={handleOpenApplyModal} />} 
+                        />
+                        <Route 
+                          path="/jobs" 
+                          element={<Jobs onApplyJob={handleOpenApplyModal} />} 
+                        />
+                        <Route 
+                          path="/jobs/:id" 
+                          element={<JobDetailsPage onApplyJob={handleOpenApplyModal} />} 
+                        />
+                        <Route 
+                          path="/contact" 
+                          element={<Contact />} 
+                        />
 
-              {/* Footer */}
-              <Footer />
+                        {/* Protected Routes (Role-aware) */}
+                        <Route 
+                          path="/dashboard" 
+                          element={
+                            <ProtectedRoute>
+                              <Dashboard onOpenPostJob={() => setIsPostJobOpen(true)} />
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/applications" 
+                          element={
+                            <ProtectedRoute allowedRoles={['candidate', 'admin']}>
+                              <Applications />
+                            </ProtectedRoute>
+                          } 
+                        />
+                        <Route 
+                          path="/profile" 
+                          element={
+                            <ProtectedRoute>
+                              <Profile />
+                            </ProtectedRoute>
+                          } 
+                        />
 
-              {/* Global Application Modal */}
-              <ApplicationForm
-                isOpen={isApplyModalOpen}
-                job={selectedJob}
-                onClose={handleCloseApplyModal}
-              />
+                        {/* Authentication Routes */}
+                        <Route 
+                          path="/login" 
+                          element={<Login />} 
+                        />
+                        <Route 
+                          path="/register" 
+                          element={<Register />} 
+                        />
 
-              {/* Global Auth Modal */}
-              <AuthModal />
+                        {/* 404 Fallback route */}
+                        <Route 
+                          path="*" 
+                          element={<NotFound />} 
+                        />
+                      </Routes>
+                    </Suspense>
+                  </main>
 
-              {/* Candidate Applications Modal */}
-              <MyApplicationsModal
-                isOpen={isMyAppsOpen}
-                onClose={() => setIsMyAppsOpen(false)}
-              />
+                  {/* Footer */}
+                  <Footer />
 
-              {/* Recruiter Post Job Modal */}
-              <PostJobModal
-                isOpen={isPostJobOpen}
-                onClose={() => setIsPostJobOpen(false)}
-              />
+                  {/* Global Application Modal */}
+                  <ApplicationForm
+                    isOpen={isApplyModalOpen}
+                    job={selectedJob}
+                    onClose={handleCloseApplyModal}
+                  />
 
-              {/* Global Toast Notifications */}
-              <Toast />
-            </div>
-          </ToastProvider>
-        </SavedJobsProvider>
+                  {/* Global Auth Modal */}
+                  <AuthModal />
+
+                  {/* Candidate Applications Modal */}
+                  <MyApplicationsModal
+                    isOpen={isMyAppsOpen}
+                    onClose={() => setIsMyAppsOpen(false)}
+                  />
+
+                  {/* Recruiter Post Job Modal */}
+                  <PostJobModal
+                    isOpen={isPostJobOpen}
+                    onClose={() => setIsPostJobOpen(false)}
+                  />
+
+                  {/* Global Toast Notifications */}
+                  <Toast />
+                </div>
+              </ToastProvider>
+            </SavedJobsProvider>
+          </NotificationProvider>
+        </ThemeProvider>
       </AuthProvider>
     </HashRouter>
   );

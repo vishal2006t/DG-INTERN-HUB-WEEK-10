@@ -1,6 +1,6 @@
-# DG Interns Hub - REST API Documentation (Week 8)
+# DG Interns Hub - REST API Documentation (Week 10 Release)
 
-Welcome to the official REST API documentation for the **DG Interns Hub Backend Application**. This production-grade API powers user authentication, role-based workflows, internship listing exploration, search, filtering, pagination, sorting, and end-to-end application tracking.
+Welcome to the official REST API documentation for the **DG Interns Hub Backend Application** (Week 10 Advanced Upgrade). This production-grade API powers user authentication, role-based workflows, internship listing exploration, search, filtering, pagination, sorting, persistent in-app notifications, platform analytics, CSV data export, and end-to-end application tracking.
 
 ---
 
@@ -31,6 +31,7 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
   - Request body payload limiting (`15kb`)
   - NoSQL query sanitization
   - Role-based authorization (`candidate`, `recruiter`, `admin`)
+  - Strict Public Registration Policy (clients cannot self-assign `admin`)
   - Bcrypt password hashing (10 salt rounds)
 
 ---
@@ -46,19 +47,31 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
    - `GET /api/users/profile`
    - `PUT /api/users/profile`
    - `DELETE /api/users/profile`
+   - `GET /api/users` *(Admin)*
+   - `PUT /api/users/:id/role` *(Admin)*
+   - `DELETE /api/users/:id` *(Admin)*
 3. [Job & Internship Endpoints](#3-job--internship-endpoints)
    - `GET /api/jobs` (Search, Filters, Pagination, Sorting)
    - `GET /api/jobs/:id`
-   - `POST /api/jobs`
-   - `PUT /api/jobs/:id`
-   - `DELETE /api/jobs/:id`
+   - `POST /api/jobs` *(Recruiter/Admin)*
+   - `PUT /api/jobs/:id` *(Job Owner/Admin)*
+   - `DELETE /api/jobs/:id` *(Job Owner/Admin)*
 4. [Application Endpoints](#4-application-endpoints)
-   - `POST /api/applications`
-   - `GET /api/applications/my`
+   - `POST /api/applications` *(Candidate)*
+   - `GET /api/applications/my` *(Candidate)*
+   - `GET /api/applications/recruiter` *(Recruiter)*
+   - `GET /api/applications/export/csv` *(Recruiter/Admin)*
    - `GET /api/applications/:id`
-   - `PUT /api/applications/:id/status`
-   - `DELETE /api/applications/:id`
-5. [System Health Check](#5-system-health-check)
+   - `PUT /api/applications/:id/status` *(Job Owner/Admin)*
+   - `DELETE /api/applications/:id` *(Applicant/Job Owner/Admin)*
+5. [Persistent Notifications Endpoints](#5-persistent-notifications-endpoints)
+   - `GET /api/notifications`
+   - `PUT /api/notifications/:id/read`
+   - `PUT /api/notifications/read-all`
+6. [Analytics & Insights Endpoints](#6-analytics--insights-endpoints)
+   - `GET /api/analytics/admin` *(Admin)*
+   - `GET /api/analytics/recruiter` *(Recruiter)*
+7. [System Health Check](#7-system-health-check)
    - `GET /api/health`
 
 ---
@@ -271,6 +284,7 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
   }
   ```
 
+
 ### 2.3 Delete User Profile
 - **Endpoint**: `/api/users/profile`
 - **Method**: `DELETE`
@@ -281,6 +295,80 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
   {
     "success": true,
     "message": "User profile and related records deleted successfully"
+  }
+  ```
+
+---
+
+### 2.4 List All Users (Admin Directory)
+- **Endpoint**: `/api/users`
+- **Method**: `GET`
+- **Purpose**: Search, filter by role, and paginate users across the platform.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `admin`
+- **Query Parameters**:
+  | Parameter | Type | Description |
+  | :--- | :--- | :--- |
+  | `role` | String | Filter users by role (`candidate`, `recruiter`, `admin`) |
+  | `search` | String | Substring match on `name` or `email` |
+  | `page` | Number | Page number (default: `1`) |
+  | `limit` | Number | Users per page (default: `10`) |
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Users retrieved successfully",
+    "data": {
+      "users": [
+        {
+          "_id": "67a4561234bc5678ef901234",
+          "name": "Alex Recruiter",
+          "email": "alex@company.com",
+          "role": "recruiter",
+          "createdAt": "2026-10-01T00:00:00.000Z"
+        }
+      ],
+      "pagination": { "totalUsers": 25, "page": 1, "limit": 10, "totalPages": 3 }
+    }
+  }
+  ```
+
+---
+
+### 2.5 Update User Role (Admin)
+- **Endpoint**: `/api/users/:id/role`
+- **Method**: `PUT`
+- **Purpose**: Changes a user's role. Protects against demoting the sole administrator.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `admin`
+- **Request Body**:
+  ```json
+  {
+    "role": "recruiter"
+  }
+  ```
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "User role updated to recruiter successfully",
+    "data": { "user": { "_id": "...", "name": "...", "role": "recruiter" } }
+  }
+  ```
+
+---
+
+### 2.6 Delete User (Admin)
+- **Endpoint**: `/api/users/:id`
+- **Method**: `DELETE`
+- **Purpose**: Administratively removes a user. Protects against self-deletion.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `admin`
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "User account removed successfully"
   }
   ```
 
@@ -546,7 +634,56 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
 
 ---
 
-### 4.3 Get Application By ID
+### 4.3 Get Recruiter Applications
+- **Endpoint**: `/api/applications/recruiter`
+- **Method**: `GET`
+- **Purpose**: Retrieves applications submitted exclusively for jobs posted by the authenticated recruiter.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `recruiter` or `admin`
+- **Query Parameters**:
+  | Parameter | Type | Description |
+  | :--- | :--- | :--- |
+  | `jobId` | String | Filter applications by specific job ID |
+  | `status` | String | Filter by status (`pending`, `shortlisted`, `accepted`, `rejected`) |
+  | `page` | Number | Pagination page (default: `1`) |
+  | `limit` | Number | Items per page (default: `20`) |
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Recruiter applications fetched successfully",
+    "data": [
+      {
+        "_id": "67a4561234bc5678ef908888",
+        "job": { "_id": "...", "title": "Frontend React Intern", "company": "TechCorp" },
+        "applicant": { "_id": "...", "name": "Jane Doe", "email": "jane@example.com", "phone": "..." },
+        "status": "pending",
+        "createdAt": "2026-10-10T12:00:00.000Z"
+      }
+    ],
+    "pagination": { "totalApplications": 12, "page": 1, "limit": 20, "totalPages": 1 }
+  }
+  ```
+
+---
+
+### 4.4 Export Applications CSV (Advanced Challenge)
+- **Endpoint**: `/api/applications/export/csv`
+- **Method**: `GET`
+- **Purpose**: Streams application records as a sanitized, RFC-compliant CSV file attachment. Recruiters export only their own candidates; Admins export platform-wide applications.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `recruiter` or `admin`
+- **Query Parameters**:
+  | Parameter | Type | Description |
+  | :--- | :--- | :--- |
+  | `jobId` | String | Optional filter by specific job |
+- **Response Headers**:
+  - `Content-Type: text/csv`
+  - `Content-Disposition: attachment; filename="applications-export-<date>.csv"`
+
+---
+
+### 4.5 Get Application By ID
 - **Endpoint**: `/api/applications/:id`
 - **Method**: `GET`
 - **Purpose**: Returns single application details.
@@ -563,10 +700,10 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
 
 ---
 
-### 4.4 Update Application Status
+### 4.6 Update Application Status
 - **Endpoint**: `/api/applications/:id/status`
 - **Method**: `PUT`
-- **Purpose**: Updates an applicant's evaluation status.
+- **Purpose**: Updates an applicant's evaluation status. Automatically sends a persistent in-app notification to the candidate.
 - **Authentication**: Required (`Bearer <token>`)
 - **Required Role**: Job owner (`recruiter`) or `admin`
 - **Request Body**:
@@ -588,7 +725,7 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
 
 ---
 
-### 4.5 Delete Application
+### 4.7 Delete Application
 - **Endpoint**: `/api/applications/:id`
 - **Method**: `DELETE`
 - **Purpose**: Withdraws or deletes an application.
@@ -604,9 +741,133 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
 
 ---
 
-## 5. System Health Check
+## 5. Persistent Notifications Endpoints
 
-### 5.1 Health Check
+### 5.1 Get User Notifications
+- **Endpoint**: `/api/notifications`
+- **Method**: `GET`
+- **Purpose**: Retrieves persistent notifications targeted specifically to the authenticated user, along with unread count.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: Any authenticated user
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Notifications fetched successfully",
+    "data": [
+      {
+        "_id": "67a4561234bc5678ef909999",
+        "recipient": "67a4561234bc5678ef901234",
+        "title": "Application Update",
+        "message": "Your application for Frontend React Intern was updated to shortlisted.",
+        "type": "status_update",
+        "link": "/dashboard",
+        "isRead": false,
+        "createdAt": "2026-10-24T12:00:00.000Z"
+      }
+    ],
+    "unreadCount": 1
+  }
+  ```
+
+---
+
+### 5.2 Mark Notification as Read
+- **Endpoint**: `/api/notifications/:id/read`
+- **Method**: `PUT`
+- **Purpose**: Marks a specific notification as read. Validates recipient ownership.
+- **Authentication**: Required (`Bearer <token>`)
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Notification marked as read",
+    "data": { "_id": "...", "isRead": true }
+  }
+  ```
+
+---
+
+### 5.3 Mark All Notifications as Read
+- **Endpoint**: `/api/notifications/read-all`
+- **Method**: `PUT`
+- **Purpose**: Marks all unread notifications for the authenticated user as read in a single batch operation.
+- **Authentication**: Required (`Bearer <token>`)
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "All notifications marked as read"
+  }
+  ```
+
+---
+
+## 6. Analytics & Insights Endpoints
+
+### 6.1 Get Admin Analytics
+- **Endpoint**: `/api/analytics/admin`
+- **Method**: `GET`
+- **Purpose**: Aggregates platform-wide metrics directly from database collections (total users, candidates, recruiters, jobs, applications, status breakdown, recent signups).
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `admin`
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "counts": {
+        "totalUsers": 48,
+        "totalCandidates": 34,
+        "totalRecruiters": 12,
+        "totalAdmins": 2,
+        "totalJobs": 18,
+        "activeJobs": 16,
+        "totalApplications": 75
+      },
+      "applicationStatusBreakdown": {
+        "pending": 30,
+        "shortlisted": 15,
+        "accepted": 10,
+        "rejected": 20
+      },
+      "recentUsers": [ ... ],
+      "recentJobs": [ ... ]
+    }
+  }
+  ```
+
+---
+
+### 6.2 Get Recruiter Analytics
+- **Endpoint**: `/api/analytics/recruiter`
+- **Method**: `GET`
+- **Purpose**: Aggregates recruiter-specific metrics for their own posted listings and incoming candidate applications.
+- **Authentication**: Required (`Bearer <token>`)
+- **Required Role**: `recruiter` or `admin`
+- **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "totalJobs": 5,
+      "activeJobs": 4,
+      "totalApplications": 28,
+      "statusBreakdown": {
+        "pending": 12,
+        "shortlisted": 8,
+        "accepted": 4,
+        "rejected": 4
+      }
+    }
+  }
+  ```
+
+---
+
+## 7. System Health Check
+
+### 7.1 Health Check
 - **Endpoint**: `/api/health`
 - **Method**: `GET`
 - **Purpose**: Quick diagnostics to verify backend server status.
@@ -616,7 +877,7 @@ Welcome to the official REST API documentation for the **DG Interns Hub Backend 
   {
     "success": true,
     "message": "DG Interns Hub Backend API is running smoothly",
-    "timestamp": "2026-10-08T10:30:00.000Z",
+    "timestamp": "2026-10-24T10:30:00.000Z",
     "environment": "development"
   }
   ```

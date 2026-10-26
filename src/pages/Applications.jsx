@@ -4,18 +4,12 @@ import {
   FileText, 
   Building2, 
   MapPin, 
-  Calendar, 
   Trash2, 
   ExternalLink, 
   Search, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock, 
-  Filter,
   Eye,
   FileCheck
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
 import Loader from '../components/Loader';
@@ -24,7 +18,6 @@ import Button from '../components/Button';
 import Modal from '../components/Modal';
 
 const Applications = () => {
-  const { user } = useAuth();
   const { success, error: toastError } = useToast();
 
   const [applications, setApplications] = useState([]);

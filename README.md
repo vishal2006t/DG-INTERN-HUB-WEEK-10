@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # DG Interns Hub - Advanced React.js Job & Internship Portal (Week 10)
 
 [![React](https://img.shields.io/badge/React-19.x-blue.svg)](https://react.dev/)

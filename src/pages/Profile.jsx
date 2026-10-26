@@ -5,13 +5,10 @@ import {
   Mail, 
   Phone, 
   Building, 
-  Sparkles, 
   Save, 
   Plus, 
   X, 
-  AlertCircle, 
   Trash2, 
-  CheckCircle2, 
   ShieldCheck,
   Calendar
 } from 'lucide-react';

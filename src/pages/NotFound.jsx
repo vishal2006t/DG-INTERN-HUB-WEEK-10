@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Compass, Home, Briefcase, ArrowLeft } from 'lucide-react';
-import Button from '../components/Button';
+import { Compass, Home, Briefcase } from 'lucide-react';
 
 const NotFound = () => {
   return (

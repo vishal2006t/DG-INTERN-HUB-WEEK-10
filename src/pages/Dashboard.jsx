@@ -11,19 +11,13 @@ import {
   Bookmark, 
   ArrowRight, 
   User, 
-  Building2, 
-  Calendar,
-  AlertCircle,
-  ExternalLink,
-  MapPin,
-  Banknote
+  Building2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSavedJobs } from '../context/SavedJobsContext';
 import { api } from '../services/api';
 import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
-import Button from '../components/Button';
 import RecruiterDashboardView from '../components/RecruiterDashboardView';
 import AdminDashboardView from '../components/AdminDashboardView';
 
